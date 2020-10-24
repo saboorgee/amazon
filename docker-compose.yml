@@ -1,0 +1,58 @@
+version: '2'
+services:
+  mariadb:
+    image: 'bitnami/mariadb:10.2'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_magento
+      - MARIADB_PASSWORD=DellD610_magento
+      - MARIADB_DATABASE=bitnami_magento
+    volumes:
+      - './mariadb_data:/bitnami'
+    restart: on-failure        
+  magento:
+    image: bitnami/magento:latest  
+    environment:
+      - MARIADB_HOST=mariadb
+      - MARIADB_PORT_NUMBER=3306
+      - MAGENTO_DATABASE_USER=bn_magento
+      - MAGENTO_DATABASE_PASSWORD=DellD610_magento
+      - MAGENTO_DATABASE_NAME=bitnami_magento
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT_NUMBER=9200
+      - MAGENTO_HOST=www.toysforkids.se
+      - VIRTUAL_HOST=www.toysforkids.se,toysforkids.se
+    restart: on-failure        
+    ports:
+      - '8080:80'
+      - '4430:443'
+    volumes:
+      - './bitnami_code:/bitnami'
+    depends_on:
+      - mariadb
+      - elasticsearch
+  elasticsearch:
+    image: 'bitnami/elasticsearch:6'
+    volumes:
+      - './elasticsearch_data:/bitnami/elasticsearch/data'
+    environment:
+      - http.host=0.0.0.0
+      - xpack.security.enabled=false
+      - xpack.license.self_generated.type=basic
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    restart: on-failure  
+volumes:
+  elasticsearch_data:
+    driver: local
+  mariadb_data:
+    driver: local
+  magento_data:
+    driver: local
+    
+networks:
+  default:
+    external:
+      name: nginx-proxy
